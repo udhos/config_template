@@ -13,7 +13,7 @@ void log(String msg) {
   entry.text = "${new DateTime.now()} $msg";
   print(entry.text);
   logbox.append(entry);
-  if (logbox.children.length > 100) {
+  if (logbox.children.length > 1000) {
     logbox.children.removeAt(0);
   }
 }
@@ -108,12 +108,18 @@ void parseParameters(String str) {
 }
 
 void updateResult() {
-  //log("updateResult: ${paramTable}");
+  log("updating result");
   
-  mustache.Template t = mustache.parse(template.value);
+  mustache.Template t;
+  
+  try {
+    t = mustache.parse(template.value);
+  } on mustache.MustacheFormatException catch(e) {
+    log("mustache parse exception: $e");
+    return;     
+  }
+  
   result.text = t.renderString(paramTable);
-  
-  log("result updated");
 }
 
 String saved_input;
