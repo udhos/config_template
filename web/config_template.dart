@@ -1,65 +1,30 @@
 import 'dart:html';
 
+import 'package:mustache/mustache.dart' as mustache;
+
 DivElement parameters = new DivElement();
 TextAreaElement template = new TextAreaElement();
 TextAreaElement result = new TextAreaElement();
 DivElement logbox = new DivElement();
-
-Set<String> paramTable = new Set<String>();
+Map paramTable = {};
 
 void log(String msg) {
   DivElement entry = new DivElement();
   entry.text = "${new DateTime.now()} $msg";
+  print(entry.text);
   logbox.append(entry);
-  if (logbox.children.length > 10) {
+  if (logbox.children.length > 100) {
     logbox.children.removeAt(0);
   }
 }
 
-DivElement findParam(String param) {
-  
-  bool matchParam(Element e) {
-    if (e is! DivElement) return false;
-    if (e.children.length != 2) return false;
-    if (e.children[1] is! InputElement) return false;
-    return (e.children[1] as InputElement).name == param;
-  }
-  
-  DivElement d;
-  
-  try {
-    d = parameters.children.firstWhere(matchParam);
-  }
-  on StateError {
-  }
-  
-  return d;
+void newParam(String param) {
+  String value = paramTable[param];
+  if (value != null) return; // already exists
+  paramTable[param] = "";
 }
 
-void addParam(String param) {
-  
-  DivElement d = findParam(param);
-  if (d != null) return; // already exists
-  
-  d = new DivElement();
-  
-  SpanElement label = new SpanElement();
-  label.text = param;
-  d.append(label);
-
-  InputElement i = new InputElement();
-  void paramChanged(Event e) {
-    log("param=$param changed to: [${i.value}]");
-  }
-  i.name = param;
-  i.onInput.listen(paramChanged);
-  d.append(i);
-    
-  parameters.append(d);
-  paramTable.add(param);
-}
-
-String parse(String str) {
+void parseParameters(String str) {
   
   List<String> lines = str.split('\n');
   
@@ -71,6 +36,8 @@ String parse(String str) {
     ++lineNum;
     String line = rawLine.trim();
     if (line.isEmpty) return;
+    
+    /*
     if (line[0] != '#') return;
     int paramIndex = line.indexOf(PREFIX);
     if (paramIndex < 1) return;
@@ -82,53 +49,104 @@ String parse(String str) {
     else {
       param = paramLine.substring(0, blankIndex);
     }
-    //log("line=$lineNum found param=[$param]");
-    addParam(param);
+    */
+    
+    if (line[0] == '#') return;
+    
+    RegExp exp = new RegExp(r"{{([^{}]+)}}");
+    Iterable<Match> matches = exp.allMatches(line);
+    for (Match m in matches) {
+      String param = m.group(1);
+      log("line=$lineNum found param=[$param]");
+      newParam(param);
+    }
+    
   }
   
+  // clear paramTable
   paramTable.clear();
   
-  lines.forEach(scanParameters); // build paramTable from input
+  // build paramTable from input
+  lines.forEach(scanParameters);
   
-  bool notOnParamTable(Element e) {
-    return paramTable.lookup((e.children[1] as InputElement).name) == null;
-  }
+  // save existing form values
+  parameters.children.where((e) => paramTable[(e.children[1] as InputElement).name] != null).forEach((e) {
+    InputElement i = e.children[1] as InputElement;
+    paramTable[i.name] = i.value;
+  });
   
-  parameters.children.where(notOnParamTable).toList().forEach((e) => e.remove());
+  // clear form
+  parameters.children.clear();
+   
+  // rebuild form
+  int n = 0;
+  paramTable.forEach((param, value) {
+    ++n;
+    
+    DivElement d = new DivElement();
+    
+    SpanElement label = new SpanElement();
+    label.text = "$n. $param";
+    d.append(label);
+
+    InputElement i = new InputElement();
+
+    void paramChanged(Event e) {
+      log("parameter [$param] changed from=[${paramTable[param]}] to=[${i.value}]");
+      paramTable[param] = i.value;
+      updateResult();
+    }
+
+    i.onInput.listen(paramChanged);
+    i.name = param;
+    i.value = value;
+    d.append(i);
+      
+    parameters.append(d);    
+  });
   
-  return str;
 }
 
-String input;
+void updateResult() {
+  //log("updateResult: ${paramTable}");
+  
+  mustache.Template t = mustache.parse(template.value);
+  result.text = t.renderString(paramTable);
+  
+  log("result updated");
+}
+
+String saved_input;
 
 void templateChanged(Event e) {
-  if (input == template.value) {
+  if (saved_input == template.value) {
     return;
   }
   
   log("template changed");
+
+  saved_input = template.value.toString(); // save template
+
+  parseParameters(template.value);
   
-  input = template.value.toString(); // save
-  result.text = parse(input); // process
+  updateResult();
 }
 
 void main() {
   DivElement root = querySelector("#root_id");
    
-  //template.onChange.listen(templateChanged);
-  //template.onKeyPress.listen(templateChanged);
   template.onInput.listen(templateChanged);
   template.id = 'template_id';
   result.id = 'result_id';
+  logbox.id = 'logbox_id';
   result.disabled = true;
   
-  root.appendHtml("Parameters:<br>");
   root.append(parameters);
-  root.appendHtml("Input template:<br>");
+  root.appendHtml("INPUT:<br>");
   root.append(template);
-  root.appendHtml("<br>Configuration:<br>");  
+  root.appendHtml("<br>CONFIGURATION:<br>");  
   root.append(result);
-  root.appendHtml("Log:<br>");  
+  root.appendHtml("<br>LOG:<br>");  
   root.append(logbox);
 }
 
