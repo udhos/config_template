@@ -21,7 +21,7 @@ void log(String msg) {
 void newParam(String param) {
   String value = paramTable[param];
   if (value != null) return; // already exists
-  paramTable[param] = "";
+  paramTable[param] = param;
 }
 
 void parseParameters(String str) {
