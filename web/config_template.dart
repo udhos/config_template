@@ -37,20 +37,6 @@ void parseParameters(String str) {
     String line = rawLine.trim();
     if (line.isEmpty) return;
     
-    /*
-    if (line[0] != '#') return;
-    int paramIndex = line.indexOf(PREFIX);
-    if (paramIndex < 1) return;
-    String paramLine = line.substring(paramIndex + PREFIX.length);
-    int blankIndex = paramLine.indexOf(' ');
-    String param;
-    if (blankIndex < 1) 
-      param = paramLine;
-    else {
-      param = paramLine.substring(0, blankIndex);
-    }
-    */
-    
     if (line[0] == '#') return;
     
     RegExp exp = new RegExp(r"{{([^{}]+)}}");
@@ -108,7 +94,7 @@ void parseParameters(String str) {
 }
 
 void updateResult() {
-  log("updating result");
+  //log("updating result");
   
   mustache.Template t;
   
@@ -129,7 +115,7 @@ void templateChanged(Event e) {
     return;
   }
   
-  log("template changed");
+  //log("template changed");
 
   saved_input = template.value.toString(); // save template
 
