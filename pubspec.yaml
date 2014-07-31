@@ -2,4 +2,4 @@ name: config_template
 description: A sample web application
 dependencies:
   browser: any
-  mustache: any
+  mustache_no_mirror: any

@@ -1,6 +1,6 @@
 import 'dart:html';
 
-import 'package:mustache/mustache.dart' as mustache;
+import 'package:mustache_no_mirror/mustache.dart' as mustache;
 
 DivElement parameters = new DivElement();
 TextAreaElement template = new TextAreaElement();
@@ -106,7 +106,7 @@ void updateResult() {
   }
 
   try {
-    result.text = t.renderString(paramTable);
+    result.text = t.renderString(paramTable, htmlEscapeValues: false);
   } on mustache.MustacheFormatException catch(e) {
     log("mustache renderString exception: $e");
   }
