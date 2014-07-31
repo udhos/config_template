@@ -37,7 +37,7 @@ void parseParameters(String str) {
     String line = rawLine.trim();
     if (line.isEmpty) return;
     
-    if (line[0] == '#') return;
+    //if (line[0] == '#') return; // skip #-prefixed lines ?
     
     RegExp exp = new RegExp(r"{{([^{}]+)}}");
     Iterable<Match> matches = exp.allMatches(line);
@@ -104,8 +104,12 @@ void updateResult() {
     log("mustache parse exception: $e");
     return;     
   }
-  
-  result.text = t.renderString(paramTable);
+
+  try {
+    result.text = t.renderString(paramTable);
+  } on mustache.MustacheFormatException catch(e) {
+    log("mustache renderString exception: $e");
+  }
 }
 
 String saved_input;
@@ -127,7 +131,6 @@ void templateChanged(Event e) {
 void main() {
   DivElement root = querySelector("#root_id");
    
-  template.onInput.listen(templateChanged);
   template.id = 'template_id';
   result.id = 'result_id';
   logbox.id = 'logbox_id';
@@ -140,5 +143,9 @@ void main() {
   root.append(result);
   root.appendHtml("<br>LOG:<br>");  
   root.append(logbox);
+  
+  log("config_template version 0.0 started");
+  
+  template.onInput.listen(templateChanged);  
 }
 
