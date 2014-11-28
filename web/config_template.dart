@@ -30,8 +30,6 @@ void parseParameters(String str) {
   
   int lineNum = 0;
   
-  final String PREFIX = " -- ";
-  
   void scanParameters(String rawLine) {
     ++lineNum;
     String line = rawLine.trim();
@@ -94,7 +92,6 @@ void parseParameters(String str) {
 }
 
 void updateResult() {
-  //log("updating result");
   
   mustache.Template t;
   
@@ -119,14 +116,14 @@ void templateChanged(Event e) {
     return;
   }
   
-  //log("template changed");
-
   saved_input = template.value.toString(); // save template
 
   parseParameters(template.value);
   
   updateResult();
 }
+
+String version = "0.1";
 
 void main() {
   DivElement root = querySelector("#root_id");
@@ -144,7 +141,7 @@ void main() {
   root.appendHtml("<br>LOG:<br>");  
   root.append(logbox);
   
-  log("config_template version 0.0 started");
+  log("config_template version $version started");
   
   template.onInput.listen(templateChanged);  
 }
